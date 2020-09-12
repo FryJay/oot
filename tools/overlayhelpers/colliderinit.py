@@ -110,6 +110,9 @@ def GetJntSph(data, off, type):
     sBase = GetColliderStr(data, off, type)
     cJntSph = struct.unpack_from(sf_JntSph, data, off + 8)
 
+    fileResult = GetFileResult(cJntSph[1])
+    PrintColliderInit("ColliderJntSphItemInit", fileResult.name, fileResult.offset, cJntSph[0])
+
     print('''
 static ColliderJntSphInit{0} sJntSphInit = 
 {{
@@ -117,7 +120,6 @@ static ColliderJntSphInit{0} sJntSphInit =
     {2},
 }};
     '''.format(type, sBase, f_JntSph.format(*cJntSph)))
-
 
 def GetTrisItems(data, off, count):
     items = GetItems(data, off, count, sf_TrisItem, f_TrisItem, 0x3C)
@@ -193,38 +195,53 @@ for i in update:
 def HexParse(s):
     return int(s, 16)
 
-parser = argparse.ArgumentParser()
-parser.add_argument('address', help="VRam or Rom address of the struct", type=HexParse)
-parser.add_argument('type', help="Type name (e.g. ColliderQuadInit)")
-parser.add_argument('num', nargs='?', default=0, type=HexParse, help="Number of elements. Only applies to ItemInit types")
+def ParseArgs():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('address', help="VRam or Rom address of the struct", type=HexParse)
+    parser.add_argument('type', help="Type name (e.g. ColliderQuadInit)")
+    parser.add_argument('num', nargs='?', default=0, type=HexParse, help="Number of elements. Only applies to ItemInit types")
 
-args = parser.parse_args()
+    args = parser.parse_args()
+    return args
 
-fileResult = None
+def GetFileResult(address):
+    fileResult = None
+    if address >= 0x80000000:
+        fileResult = GetFromVRam(address)
+    else:
+        fileResult = GetFromRom(address)
 
-if args.address >= 0x80000000:
-    fileResult = GetFromVRam(args.address)
-else:
-    fileResult = GetFromRom(args.address)
+    if fileResult is None:
+        print("Invalid address")
+        exit()
 
-if fileResult is None:
-    print("Invalid address")
-    exit()
+    print(fileResult)
+    return fileResult
 
-print(fileResult)
+def PrintColliderInit(colliderInitType, fileName, offset, number = None):
 
-selectedType = TYPE_DICT[args.type]
-arg2 = None
-if selectedType[1] == 'Shape':
-    arg2 = selectedType[2]
-elif args.num > 0:
-    arg2 = args.num
-else:
-    print("ItemInit type must specify number of elements")
-    exit()
+    selectedType = TYPE_DICT[colliderInitType]
+    arg2 = None
+    if selectedType[1] == 'Shape':
+        arg2 = selectedType[2]
+    elif number:
+        arg2 = number
+    else:
+        print("ItemInit type must specify number of elements")
+        exit()
 
-ovlFile = open("../../baserom/" + fileResult.name, "rb")
-ovlData = bytearray(ovlFile.read())
-ovlFile.close()
+    ovlFile = open("../../baserom/" + fileName, "rb")
+    ovlData = bytearray(ovlFile.read())
+    ovlFile.close()
 
-selectedType[0](ovlData, fileResult.offset, arg2)
+    selectedType[0](ovlData, offset, arg2)
+
+def main():
+    args = ParseArgs()
+    print(args)
+    fileResult = GetFileResult(args.address)
+    PrintColliderInit(args.type, fileResult.name, fileResult.offset, args.num)
+
+if __name__ == "__main__":
+    main()
+
