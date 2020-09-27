@@ -28,50 +28,26 @@ static InitChainEntry sInitChain[] = {
     ICHAIN_VEC3F_DIV1000(scale, 1000, ICHAIN_STOP),
 };
 
-// void BgTokiHikari_Init(Actor *thisx, GlobalContext *globalCtx) {
-//     BgTokiHikari *this = THIS;
-
-//     if (thisx->params != 1) {
-//         return;
-//     }
-//     if (thisx->params == 0) {
-//         Actor_ProcessInitChain(thisx, sInitChain);
-//         this->actionFunc = func_808B9F98;
-//         return;
-//     }
-//     if ((gSaveContext.eventChkInf[1] & 0x800) == 0) {
-//         this->actionFunc = func_808BA204;
-//         this->unk_14C = 0.0f;
-//         return;
-//     }
-//     Actor_Kill(thisx);
-// }
-
 void BgTokiHikari_Init(Actor *thisx, GlobalContext *globalCtx) {
     BgTokiHikari *this = THIS;
-    s16 temp_v0;
 
-    temp_v0 = thisx->params;
-    if (temp_v0 == 0) {
-        goto block_3;
+    switch (thisx->params) {
+        case 0:
+            Actor_ProcessInitChain(thisx, sInitChain);
+            this->actionFunc = func_808B9F98;
+            break;
+        case 1:
+            if ((gSaveContext.eventChkInf[4] & 0x800) == 0) {
+                this->actionFunc = func_808BA204;
+                this->unk_14C = 0.0f;
+            }
+            else {
+                Actor_Kill(thisx);
+            }
+            break;
+        default:
+            break;
     }
-    if (temp_v0 != 1) {
-        return;
-    }
-    goto block_4;
-block_3:
-    Actor_ProcessInitChain(thisx, sInitChain);
-    this->actionFunc = func_808B9F98;
-    return;
-block_4:
-    if ((gSaveContext.eventChkInf[4] & 0x800) != 0) {
-        goto block_6;
-    }
-    this->actionFunc = func_808BA204;
-    this->unk_14C = 0.0f;
-    return;
-block_6:
-    Actor_Kill(thisx);
 }
 
 // #pragma GLOBAL_ASM("asm/non_matchings/overlays/actors/ovl_Bg_Toki_Hikari/BgTokiHikari_Init.s")
