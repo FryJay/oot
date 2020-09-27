@@ -24,7 +24,28 @@ const ActorInit Bg_Toki_Hikari_InitVars = {
     (ActorFunc)BgTokiHikari_Draw,
 };
 
-static s32 D_808BAC70 = { 0x485003E8, 0x00000000, 0x00000000, 0x00000000 };
+static InitChainEntry sInitChain[] = {
+    ICHAIN_VEC3F_DIV1000(scale, 1000, ICHAIN_STOP),
+};
+
+// void BgTokiHikari_Init(Actor *thisx, GlobalContext *globalCtx) {
+//     BgTokiHikari *this = THIS;
+
+//     if (thisx->params != 1) {
+//         return;
+//     }
+//     if (thisx->params == 0) {
+//         Actor_ProcessInitChain(thisx, sInitChain);
+//         this->actionFunc = func_808B9F98;
+//         return;
+//     }
+//     if ((gSaveContext.eventChkInf[1] & 0x800) == 0) {
+//         this->actionFunc = func_808BA204;
+//         this->unk_14C = 0.0f;
+//         return;
+//     }
+//     Actor_Kill(thisx);
+// }
 
 void BgTokiHikari_Init(Actor *thisx, GlobalContext *globalCtx) {
     BgTokiHikari *this = THIS;
@@ -32,18 +53,24 @@ void BgTokiHikari_Init(Actor *thisx, GlobalContext *globalCtx) {
 
     temp_v0 = thisx->params;
     if (temp_v0 == 0) {
-        Actor_ProcessInitChain(thisx, (InitChainEntry *) &D_808BAC70);
-        this->actionFunc = func_808B9F98;
-        return;
+        goto block_3;
     }
     if (temp_v0 != 1) {
         return;
     }
-    if ((*(&gSaveContext + 0xEDC) & 0x800) == 0) {
-        thisx->actionFunc = func_808BA204;
-        thisx->unk_14C = 0.0f;
-        return;
+    goto block_4;
+block_3:
+    Actor_ProcessInitChain(thisx, sInitChain);
+    this->actionFunc = func_808B9F98;
+    return;
+block_4:
+    if ((gSaveContext.eventChkInf[4] & 0x800) != 0) {
+        goto block_6;
     }
+    this->actionFunc = func_808BA204;
+    this->unk_14C = 0.0f;
+    return;
+block_6:
     Actor_Kill(thisx);
 }
 
